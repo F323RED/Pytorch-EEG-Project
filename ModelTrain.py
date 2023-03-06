@@ -71,6 +71,22 @@ if __name__ == '__main__':
     model = EEGNet(lr=learningRate)
 
 
+    # Test zone
+    '''
+    x, y = trainDataset[0]
+    x = x.view(1, x.shape[0], x.shape[1], x.shape[2])
+    y = y.view(1, -1)
+
+    print("x.shape", x.shape)
+    print("y.shape", y.shape)
+    print()
+
+    z = model(x)
+    print("z.shape", z.shape)
+
+    exit()
+    '''
+
     # Load existing model
     if os.path.exists(modelPath) :
         while(True) :

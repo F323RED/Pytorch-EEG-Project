@@ -16,8 +16,9 @@ class EEGNet(pl.LightningModule) :
         TIME_POINT = 500
         SAMPLE_RATE = TIME_POINT // 2
 
-        NUM_TEMPORAL_FILTER = 16
-        NUM_SPATIAL_FILTER = 16
+        NUM_TEMP_F = 16     # Number of temporal filter
+        DEPTH = 4      # Number of spatial filter
+        NUM_POINT_F = 4     # Number of point wise filter
 
         DROPOUT_RATE = 0.25
         NUM_CLASS = 5
@@ -32,52 +33,41 @@ class EEGNet(pl.LightningModule) :
         # Block 1 
         # input: (N, 1, CHANNEL, TIME_POINT)
         self.convBlock1 = torch.nn.Sequential(
-            torch.nn.Conv2d(1, NUM_TEMPORAL_FILTER, (NUM_CHANNEL, 1), padding=0),
-            torch.nn.BatchNorm2d(NUM_TEMPORAL_FILTER),
-            torch.nn.ReLU(),
+            # This conv2d server as band-pass filter
+            torch.nn.Conv2d(1, NUM_TEMP_F, (1, SAMPLE_RATE), padding="same"),
+            torch.nn.BatchNorm2d(NUM_TEMP_F),
+            # Deep-wise conv2d spatial filter
+            torch.nn.Conv2d(NUM_TEMP_F, NUM_TEMP_F * DEPTH, (NUM_CHANNEL, 1), 
+                            padding="valid",
+                            groups=NUM_TEMP_F),
+            torch.nn.BatchNorm2d(NUM_TEMP_F * DEPTH),
+            torch.nn.ELU(),
+            torch.nn.AvgPool2d((1, 4)),
             torch.nn.Dropout(DROPOUT_RATE)
         )
-
-        self.zeroPadding1 = torch.nn.ZeroPad2d((16, 17, 0, 1))
         
         # Block 2
-        # input: (N, 1, 16, TIME_POINT)
+        # input: (N, NUM_TEMP_F * NUM_SPAT_F, 1, TIME_POINT // 4)
         self.convBlock2 = torch.nn.Sequential(
-            torch.nn.Conv2d(1, 4, (2, 32), padding=0),
-            torch.nn.BatchNorm2d(4),
-            torch.nn.MaxPool2d((2, 4)),
-            torch.nn.ReLU(),
+            # This is suppose to be a separable conv2d. 
+            # But I am too lazy to implement this.
+            torch.nn.Conv2d(NUM_TEMP_F * DEPTH, NUM_POINT_F, (1, 16), padding="same"),
+            torch.nn.BatchNorm2d(NUM_POINT_F),
+            torch.nn.ELU(),
+            torch.nn.AvgPool2d((1, 8), padding=(0, 4)),
             torch.nn.Dropout(DROPOUT_RATE)
         )
-
-        self.zeroPadding2 = torch.nn.ZeroPad2d((2, 1, 3, 4))
 
         # Block 3
-        # input: (N, 4, 8, TIME_POINT/4)
-        self.convBlock3 = torch.nn.Sequential(
-            torch.nn.Conv2d(4, 4, (8, 4), padding=0),
-            torch.nn.BatchNorm2d(4),
-            torch.nn.MaxPool2d((2, 4), padding=(0, 2)),
-            torch.nn.ReLU(),
-            torch.nn.Dropout(DROPOUT_RATE)
-        )
-
-        # Block 4
-        # input: (N, 4, 4, TIME_POINT/16)
+        # input: (N, NUM_POINT_F, 1, TIME_POINT // 32)
         self.linearBlock1 = torch.nn.Sequential(
             torch.nn.Flatten(),
-            torch.nn.Linear(4*4*32, NUM_CLASS)
+            torch.nn.Linear(NUM_POINT_F * 16, NUM_CLASS)
         )
 
     def forward(self, x) :
         pred = self.convBlock1(x)
-        pred = torch.permute(pred, (0, 2, 1, 3))
-
-        pred = self.zeroPadding1(pred)
         pred = self.convBlock2(pred)
-
-        pred = self.zeroPadding2(pred)
-        pred = self.convBlock3(pred)
 
         pred = self.linearBlock1(pred)
 
