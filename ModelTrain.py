@@ -11,7 +11,7 @@ from EEGDataset import EEGDataset, DataLoaderX
 
 # configure logging at the root level of Lightning
 import logging
-logging.getLogger("pytorch_lightning").setLevel(logging.WARN)
+logging.getLogger("pytorch_lightning").setLevel(logging.ERROR)
 
 
 # Hyper parameters
@@ -23,7 +23,11 @@ batchSize = 100
 modelName = "EEGNet_v0.1"
 currentPath = os.getcwd()
 modelPath = os.path.join(currentPath, "params", modelName + ".pt")
-datasetDir = r"D:\程式碼\Pytorch EEG\data\fred"
+
+# datasetDir = r"D:\程式碼\Pytorch EEG\data\fred"
+datasetDir = r"D:\程式碼\Pytorch EEG\data\charli"
+# datasetDir = r"D:\程式碼\Pytorch EEG\data\eddi"
+
 checkPointPath = os.path.join(currentPath, "checkpoint")
 
 
@@ -71,22 +75,6 @@ if __name__ == '__main__':
     model = EEGNet(lr=learningRate)
 
 
-    # Test zone
-    '''
-    x, y = trainDataset[0]
-    x = x.view(1, x.shape[0], x.shape[1], x.shape[2])
-    y = y.view(1, -1)
-
-    print("x.shape", x.shape)
-    print("y.shape", y.shape)
-    print()
-
-    z = model(x)
-    print("z.shape", z.shape)
-
-    exit()
-    '''
-
     # Load existing model
     if os.path.exists(modelPath) :
         while(True) :
@@ -104,7 +92,7 @@ if __name__ == '__main__':
     # pytorch-lightning train
     trainer = Trainer(max_epochs=epochs,
                       accelerator="auto",
-                      check_val_every_n_epoch=10,
+                      check_val_every_n_epoch=3,
                       log_every_n_steps=10,
                       default_root_dir=checkPointPath,
                       benchmark=True)
@@ -112,6 +100,7 @@ if __name__ == '__main__':
 
     print("Pre-test.")
     trainer.test(model, testDataLoader)
+    model.PrintAndResetTestMetrics()
     print()
 
     print("Training.")
@@ -120,6 +109,7 @@ if __name__ == '__main__':
 
     print("Post-test.")
     trainer.test(model, testDataLoader)
+    model.PrintAndResetTestMetrics()
     print()
 
 

@@ -25,8 +25,25 @@ class EEGNet(pl.LightningModule) :
 
         self.lr = lr
 
-        # Define model metrics
-        self.metric = torchmetrics.Accuracy(task="multiclass", num_classes=NUM_CLASS, average="macro")
+        # Init model metrics
+        self.trainAccuracy = torchmetrics.Accuracy(task="multiclass", 
+                                              num_classes=NUM_CLASS, 
+                                              average="macro")
+        
+        self.testAccuracy = torchmetrics.Accuracy(task="multiclass", 
+                                              num_classes=NUM_CLASS, 
+                                              average="macro")
+        
+        self.valAccuracy = torchmetrics.Accuracy(task="multiclass", 
+                                              num_classes=NUM_CLASS, 
+                                              average="macro")
+        
+        self.confMatrix = torchmetrics.ConfusionMatrix(task="multiclass", 
+                                                       num_classes=NUM_CLASS)
+
+        self.F1Score = torchmetrics.F1Score(task="multiclass", num_classes=NUM_CLASS)
+        self.preci = torchmetrics.Precision(task="multiclass", num_classes=NUM_CLASS)
+        self.recall = torchmetrics.Recall(task="multiclass", num_classes=NUM_CLASS)
 
 
         # Define model
@@ -83,8 +100,8 @@ class EEGNet(pl.LightningModule) :
         result = torch.argmax(pred, dim=1)
 
         # Collect metrics
-        accuracy = self.metric(target, result)
-        self.log("train_acc", accuracy, prog_bar=True, on_epoch=True)
+        accuracy = self.trainAccuracy(target, result)
+        self.log("train_acc", accuracy, prog_bar=True, on_step=False,on_epoch=True)
         self.log("train_loss", loss)
 
         return loss
@@ -100,8 +117,13 @@ class EEGNet(pl.LightningModule) :
         result = torch.argmax(pred, dim=1)
 
         # Collect metrics
-        accuracy = self.metric(target, result)
-        self.log("test_acc", accuracy)
+        accuracy = self.testAccuracy(target, result)
+        self.confMatrix.update(target, result)
+        self.F1Score.update(target, result)
+        self.preci.update(target, result)
+        self.recall.update(target, result)
+
+        self.log("test_acc", accuracy, on_step=False, on_epoch=True)
         self.log("test_loss", loss)
 
         return loss
@@ -117,8 +139,8 @@ class EEGNet(pl.LightningModule) :
         result = torch.argmax(pred, dim=1)
 
         # Collect metrics
-        accuracy = self.metric(target, result)
-        self.log("val_acc", accuracy)
+        accuracy = self.valAccuracy(target, result)
+        self.log("val_acc", accuracy, prog_bar=True, on_step=False, on_epoch=True)
         self.log("val_loss", loss)
 
         return loss
@@ -134,3 +156,42 @@ class EEGNet(pl.LightningModule) :
                 "frequency": 1,
             },
         }
+
+    # This function will be called at the end of test epoch
+    # def test_epoch_end(self, outputs) :
+    #     self.PrintAndResetTestMetrics()
+    
+    def PrintAndResetTestMetrics(self) :
+        acc = self.testAccuracy.compute().item() * 100
+        f1 = self.F1Score.compute().item()
+        pre = self.preci.compute().item()
+        rec = self.recall.compute().item()
+
+        # Print accuracy
+        print(f"Accuracy: {acc:.02f}%")
+
+        # Print F1 score
+        print(f"F1-score: {f1:.03f}")
+
+        # Print precision
+        print(f"Precision: {pre:.03f}")
+        
+        # Print recall
+        print(f"Recall: {rec:.03f}")
+        print()
+        
+        # Print confusion matrix
+        tempMat = self.confMatrix.compute()
+        print("Confusion matrix:")
+        for row in tempMat :
+            print("|", end=" ")
+            for col in row :
+                print(f"{col:>3d}", end=" ")
+            print("|")
+
+        self.testAccuracy.reset()
+        self.confMatrix.reset()
+        self.F1Score.reset()
+        self.preci.reset()
+        self.recall.reset()
+
