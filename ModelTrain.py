@@ -1,38 +1,40 @@
 import torch
-
 import pytorch_lightning as pl
 from pytorch_lightning import Trainer
+from pytorch_lightning.loggers import CSVLogger
 
 import os
 
 from EEGNetModel import EEGNet
 from EEGDataset import EEGDataset, DataLoaderX
 
-
 # configure logging at the root level of Lightning
 import logging
 logging.getLogger("pytorch_lightning").setLevel(logging.ERROR)
 
 
-# Hyper parameters
-learningRate = 0.001
-epochs = 300
-batchSize = 100
-
-# Misc setting
-modelName = "EEGNet_v0.1"
-currentPath = os.getcwd()
-modelPath = os.path.join(currentPath, "params", modelName + ".pt")
-
-# datasetDir = r"D:\程式碼\Pytorch EEG\data\fred"
-datasetDir = r"D:\程式碼\Pytorch EEG\data\charli"
-# datasetDir = r"D:\程式碼\Pytorch EEG\data\eddi"
-
-checkPointPath = os.path.join(currentPath, "checkpoint")
-
 
 # Main function
 if __name__ == '__main__':
+    # Hyper parameters
+    learningRate = 0.001
+    epochs = 300
+    batchSize = 100
+
+    # Misc setting
+    modelName = "EEGNet_v0.1"
+    currentPath = os.getcwd()
+    modelPath = os.path.join(currentPath, "params", modelName + ".pt")
+
+    # datasetDir = r"D:\程式碼\Pytorch EEG\data\fred"
+    # datasetDir = r"D:\程式碼\Pytorch EEG\data\charli"
+    datasetDir = r"D:\程式碼\Pytorch EEG\data\eddi"
+
+    checkPointPath = os.path.join(currentPath, "checkpoint")
+    logPath = os.path.join(currentPath, "logs")
+
+
+
     # Load EEG dataset. 
     # Shape: (num, channel, data points) = (num, 8, 500)
     print("Load train dataset")
@@ -89,11 +91,17 @@ if __name__ == '__main__':
                 break
     print()
 
+
+    # TensorBoard logger
+    # logger = TensorBoardLogger(save_dir=logPath)
+    logger = CSVLogger(logPath, name=f"{modelName}-log")
+
     # pytorch-lightning train
     trainer = Trainer(max_epochs=epochs,
                       accelerator="auto",
                       check_val_every_n_epoch=3,
                       log_every_n_steps=10,
+                      logger=logger,
                       default_root_dir=checkPointPath,
                       benchmark=True)
 
