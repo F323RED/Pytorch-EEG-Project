@@ -6,11 +6,16 @@ from pytorch_lightning.loggers import CSVLogger
 import os
 
 from EEGNetModel import EEGNet
+from EEGConformerModel import EEGConformer
 from EEGDataset import EEGDataset, DataLoaderX
 
-# configure logging at the root level of Lightning
+# Configure logging at the root level of Lightning
 import logging
-logging.getLogger("pytorch_lightning").setLevel(logging.ERROR)
+logging.getLogger("pytorch_lightning").setLevel(logging.FATAL)
+
+# Surpress all warning. They are so annoying.
+import warnings
+warnings.filterwarnings("ignore")
 
 
 
@@ -18,7 +23,7 @@ logging.getLogger("pytorch_lightning").setLevel(logging.ERROR)
 if __name__ == '__main__':
     # Hyper parameters
     learningRate = 0.001
-    epochs = 300
+    epochs = 100
     batchSize = 100
 
     # Misc setting
@@ -26,9 +31,9 @@ if __name__ == '__main__':
     currentPath = os.getcwd()
     modelPath = os.path.join(currentPath, "params", modelName + ".pt")
 
-    # datasetDir = r"D:\程式碼\Pytorch EEG\data\fred"
+    datasetDir = r"D:\程式碼\Pytorch EEG\data\fred"
     # datasetDir = r"D:\程式碼\Pytorch EEG\data\charli"
-    datasetDir = r"D:\程式碼\Pytorch EEG\data\eddi"
+    # datasetDir = r"D:\程式碼\Pytorch EEG\data\eddi"
 
     checkPointPath = os.path.join(currentPath, "checkpoint")
     logPath = os.path.join(currentPath, "logs")
@@ -46,22 +51,29 @@ if __name__ == '__main__':
     print("Load val dataset")
     valDataset = EEGDataset(root=datasetDir, type="val")
 
-    
+
+    # DataLoader settings
+    NUM_WORKERS = 0
+    PIN_MEM = True
+
     trainDataLoader = DataLoaderX(trainDataset,
                                   batch_size=batchSize,
                                   shuffle=True,
                                   drop_last=True,
-                                  num_workers=6)
+                                  num_workers=NUM_WORKERS,
+                                  pin_memory=PIN_MEM)
 
     testDataLoader = DataLoaderX(testDataset,
                                  batch_size=batchSize,
                                  drop_last=True,
-                                 num_workers=6)
+                                 num_workers=NUM_WORKERS,
+                                 pin_memory=PIN_MEM)
     
     valDataLoader = DataLoaderX(valDataset,
                                  batch_size=batchSize,
                                  drop_last=True,
-                                 num_workers=6)
+                                 num_workers=NUM_WORKERS,
+                                 pin_memory=PIN_MEM)
 
 
     print("Done loading dataset.")
@@ -73,8 +85,21 @@ if __name__ == '__main__':
     print()
 
 
-    # .load_from_checkpoint("/path/to/checkpoint.ckpt")
+
     model = EEGNet(lr=learningRate)
+    # model = EEGConformer(lr=learningRate)
+
+
+    # Test zone
+    # x, y = testDataset[0]
+    # x = x.view((1, x.shape[0], x.shape[1], x.shape[2]))
+
+    # z = model(x)
+
+    # print(x.shape)
+    # print(z.shape)
+
+    # exit()
 
 
     # Load existing model
@@ -99,11 +124,12 @@ if __name__ == '__main__':
     # pytorch-lightning train
     trainer = Trainer(max_epochs=epochs,
                       accelerator="auto",
-                      check_val_every_n_epoch=3,
+                      check_val_every_n_epoch=5,
                       log_every_n_steps=10,
                       logger=logger,
                       default_root_dir=checkPointPath,
-                      benchmark=True)
+                      benchmark=True, 
+                      num_sanity_val_steps=0)
 
 
     print("Pre-test.")
