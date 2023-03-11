@@ -1,4 +1,5 @@
 import torch
+from torch.utils.data import DataLoader
 import pytorch_lightning as pl
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import CSVLogger
@@ -27,7 +28,7 @@ if __name__ == '__main__':
     batchSize = 100
 
     # Misc setting
-    modelName = "EEGNet_v0.1"
+    modelName = "EEGConformer_v0.1"
     currentPath = os.getcwd()
     modelPath = os.path.join(currentPath, "params", modelName + ".pt")
 
@@ -55,25 +56,27 @@ if __name__ == '__main__':
     # DataLoader settings
     NUM_WORKERS = 0
     PIN_MEM = True
+    PERSIS_WORKER = (NUM_WORKERS > 0)
 
-    trainDataLoader = DataLoaderX(trainDataset,
-                                  batch_size=batchSize,
-                                  shuffle=True,
-                                  drop_last=True,
-                                  num_workers=NUM_WORKERS,
-                                  pin_memory=PIN_MEM)
-
-    testDataLoader = DataLoaderX(testDataset,
+    trainDataLoader = DataLoader(trainDataset,
                                  batch_size=batchSize,
+                                 shuffle=True,
                                  drop_last=True,
                                  num_workers=NUM_WORKERS,
+                                 persistent_workers=PERSIS_WORKER,
                                  pin_memory=PIN_MEM)
+
+    testDataLoader = DataLoader(testDataset,
+                                batch_size=batchSize,
+                                drop_last=True,
+                                pin_memory=PIN_MEM)
     
-    valDataLoader = DataLoaderX(valDataset,
-                                 batch_size=batchSize,
-                                 drop_last=True,
-                                 num_workers=NUM_WORKERS,
-                                 pin_memory=PIN_MEM)
+    valDataLoader = DataLoader(valDataset,
+                               batch_size=batchSize,
+                               drop_last=True,
+                               num_workers=NUM_WORKERS,
+                               persistent_workers=PERSIS_WORKER,
+                               pin_memory=PIN_MEM)
 
 
     print("Done loading dataset.")
@@ -86,20 +89,8 @@ if __name__ == '__main__':
 
 
 
-    model = EEGNet(lr=learningRate)
-    # model = EEGConformer(lr=learningRate)
-
-
-    # Test zone
-    # x, y = testDataset[0]
-    # x = x.view((1, x.shape[0], x.shape[1], x.shape[2]))
-
-    # z = model(x)
-
-    # print(x.shape)
-    # print(z.shape)
-
-    # exit()
+    # model = EEGNet(lr=learningRate)
+    model = EEGConformer(lr=learningRate)
 
 
     # Load existing model
@@ -117,7 +108,7 @@ if __name__ == '__main__':
     print()
 
 
-    # TensorBoard logger
+    # CSV logger. It will save metric.csv file.
     # logger = TensorBoardLogger(save_dir=logPath)
     logger = CSVLogger(logPath, name=f"{modelName}-log")
 
