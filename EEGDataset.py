@@ -32,7 +32,9 @@ class EEGDataset(Dataset):
 
         # Check if dataset file exist.
         if not os.path.isfile(dataPath) or not os.path.isfile(labelPath) :
-            raise BaseException("Can't find dataset file.")
+            print(dataPath, "or", labelPath, "is missing!")
+            exit()
+        
         
         # Load EEG data and apply pre-processing
         self.x = torch.from_numpy(np.load(dataPath))

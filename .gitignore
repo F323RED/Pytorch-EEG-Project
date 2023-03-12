@@ -1,0 +1,10 @@
+__pycache__/*
+checkpoint/*
+logs/*
+EEG Net map.webp
+ModelTrain.py
+metrics/*
+Conformer.py
+GetDataMeanStd.ipynb
+console screenshots/*
+params/*
