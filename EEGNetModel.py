@@ -17,13 +17,27 @@ class EEGNet(pl.LightningModule) :
         SAMPLE_RATE = TIME_POINT // 2
 
         NUM_TEMP_F = 16     # Number of temporal filter
-        DEPTH = 4      # Number of spatial filter
+        DEPTH = 4           # Number of spatial filter
         NUM_POINT_F = 4     # Number of point wise filter
 
         DROPOUT_RATE = 0.25
         NUM_CLASS = 5
 
         self.lr = lr
+
+
+        # Model parameter dict
+        self.__modelParameters = {
+            "num_channel" : NUM_CHANNEL,
+            "num_time_point" : TIME_POINT,
+            "dropout_rate" : DROPOUT_RATE,
+            "lr" : lr,
+            "num_temporal_filter" : NUM_TEMP_F,
+            "deep_wise_conv_depth" : DEPTH,
+            "num_point_wise_filter" : NUM_POINT_F,
+            "num_class" : NUM_CLASS
+        }
+
 
         # Init model metrics
         self.trainAccuracy = torchmetrics.Accuracy(task="multiclass", 
@@ -156,10 +170,6 @@ class EEGNet(pl.LightningModule) :
                 "frequency": 1,
             },
         }
-
-    # This function will be called at the end of test epoch
-    # def test_epoch_end(self, outputs) :
-    #     self.PrintAndResetTestMetrics()
     
     def PrintAndResetTestMetrics(self) :
         acc = self.testAccuracy.compute().item() * 100
@@ -195,3 +205,5 @@ class EEGNet(pl.LightningModule) :
         self.preci.reset()
         self.recall.reset()
 
+    def GetModelParameters(self) :
+        return self.__modelParameters

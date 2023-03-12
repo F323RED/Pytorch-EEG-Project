@@ -6,7 +6,7 @@ import pytorch_lightning as pl
 import torchmetrics
 
 import einops
-from einops.layers.torch import Rearrange, Reduce
+from einops.layers.torch import Rearrange
 
 # Design model
 class EEGConformer(pl.LightningModule) :
@@ -21,28 +21,45 @@ class EEGConformer(pl.LightningModule) :
         DROPOUT_RATE = 0.5
 
         # Number of temporal filter
-        NUM_TEMP_F = 32
+        NUM_TEMP_F = 40
 
         # Need to convert EED data to (N, L, E) format.
         # So it can fit into TransformerDecoder
         EMBED_SIZE = 40
 
         # To determine size of feed forward layer of TransformerDecoder
-        FEEDFORWARD_EXPANSION = 4
+        FEEDFORWARD_EXPANSION = 5
 
         # This determine how many TransformerDecoderLayer in TransformerDecoder
         # According to the paper, depth of 1 is just enough.
-        TRANSFORMER_DEPTH = 1
+        DECODER_DEPTH = 1
 
         # Number of attention head
-        NUM_HEAD = 8
+        NUM_HEAD = 10
 
         # Linear block setting
-        HIDDEN_LAYER_SIZE1 = 256
+        HIDDEN_LAYER_SIZE1 = 512
         HIDDEN_LAYER_SIZE2 = 32
         NUM_CLASS = 5
 
         self.lr = lr
+
+
+        # Model parameter dict
+        self.__modelParameters = {
+            "num_channel" : NUM_CHANNEL,
+            "dropout_rate" : DROPOUT_RATE,
+            "lr" : lr,
+            "num_temporal_filter" : NUM_TEMP_F,
+            "embed_size" : EMBED_SIZE,
+            "decoder_ff_size" : EMBED_SIZE * FEEDFORWARD_EXPANSION,
+            "decoder_depth" : DECODER_DEPTH,
+            "num_heads" : NUM_HEAD,
+            "hidden_layer_1_size" : HIDDEN_LAYER_SIZE1,
+            "hidden_layer_2_size" : HIDDEN_LAYER_SIZE2,
+            "num_class" : NUM_CLASS
+        }
+
 
         # Init model metrics
         self.trainAccuracy = torchmetrics.Accuracy(task="multiclass",
@@ -98,7 +115,7 @@ class EEGConformer(pl.LightningModule) :
         # NOTE: This didn't have residue & norm layer. So it might be hard to train.
         self.transformerEncoder = torch.nn.TransformerEncoder(
             self.transformerEncoderLayer,
-            TRANSFORMER_DEPTH,
+            DECODER_DEPTH,
         )
 
         # Linear block. Output classes.
@@ -226,3 +243,5 @@ class EEGConformer(pl.LightningModule) :
         self.preci.reset()
         self.recall.reset()
 
+    def GetModelParameters(self) :
+        return self.__modelParameters
