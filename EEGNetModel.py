@@ -40,35 +40,36 @@ class EEGNet(pl.LightningModule) :
 
 
         # Init model metrics
-        self.trainAccuracy = torchmetrics.Accuracy(task="multiclass", 
-                                              num_classes=NUM_CLASS, 
-                                              average="macro")
-        
-        self.testAccuracy = torchmetrics.Accuracy(task="multiclass", 
-                                              num_classes=NUM_CLASS, 
-                                              average="macro")
-        
-        self.valAccuracy = torchmetrics.Accuracy(task="multiclass", 
-                                              num_classes=NUM_CLASS, 
-                                              average="macro")
-        
-        self.confMatrix = torchmetrics.ConfusionMatrix(task="multiclass", 
+        self.trainAccuracy = torchmetrics.Accuracy(task="multiclass",
+                                                   average="micro",
+                                                   num_classes=NUM_CLASS)
+
+        self.testAccuracy = torchmetrics.Accuracy(task="multiclass",
+                                                  average="micro",
+                                                  num_classes=NUM_CLASS)
+
+        self.valAccuracy = torchmetrics.Accuracy(task="multiclass",
+                                                 average="micro",
+                                                 num_classes=NUM_CLASS)
+
+        self.confMatrix = torchmetrics.ConfusionMatrix(task="multiclass",
+                                                       normalize="true",
                                                        num_classes=NUM_CLASS)
 
-        self.F1Score = torchmetrics.F1Score(task="multiclass", num_classes=NUM_CLASS)
-        self.preci = torchmetrics.Precision(task="multiclass", num_classes=NUM_CLASS)
-        self.recall = torchmetrics.Recall(task="multiclass", num_classes=NUM_CLASS)
+        self.F1Score = torchmetrics.F1Score(task="multiclass", average="macro", num_classes=NUM_CLASS)
+        self.preci = torchmetrics.Precision(task="multiclass", average="macro", num_classes=NUM_CLASS)
+        self.recall = torchmetrics.Recall(task="multiclass", average="macro", num_classes=NUM_CLASS)
 
 
         # Define model
-        # Block 1 
+        # Block 1
         # input: (N, 1, CHANNEL, TIME_POINT)
         self.convBlock1 = torch.nn.Sequential(
             # This conv2d server as band-pass filter
             torch.nn.Conv2d(1, NUM_TEMP_F, (1, SAMPLE_RATE), padding="same"),
             torch.nn.BatchNorm2d(NUM_TEMP_F),
             # Deep-wise conv2d spatial filter
-            torch.nn.Conv2d(NUM_TEMP_F, NUM_TEMP_F * DEPTH, (NUM_CHANNEL, 1), 
+            torch.nn.Conv2d(NUM_TEMP_F, NUM_TEMP_F * DEPTH, (NUM_CHANNEL, 1),
                             padding="valid",
                             groups=NUM_TEMP_F),
             torch.nn.BatchNorm2d(NUM_TEMP_F * DEPTH),
@@ -76,11 +77,11 @@ class EEGNet(pl.LightningModule) :
             torch.nn.AvgPool2d((1, 4)),
             torch.nn.Dropout(DROPOUT_RATE)
         )
-        
+
         # Block 2
         # input: (N, NUM_TEMP_F * NUM_SPAT_F, 1, TIME_POINT // 4)
         self.convBlock2 = torch.nn.Sequential(
-            # This is suppose to be a separable conv2d. 
+            # This is suppose to be a separable conv2d.
             # But I am too lazy to implement this.
             torch.nn.Conv2d(NUM_TEMP_F * DEPTH, NUM_POINT_F, (1, 16), padding="same"),
             torch.nn.BatchNorm2d(NUM_POINT_F),
@@ -158,10 +159,10 @@ class EEGNet(pl.LightningModule) :
         self.log("val_loss", loss)
 
         return loss
-    
+
     def configure_optimizers(self) :
         optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
-        
+
         return {
             "optimizer": optimizer,
             "lr_scheduler": {
@@ -170,7 +171,7 @@ class EEGNet(pl.LightningModule) :
                 "frequency": 1,
             },
         }
-    
+
     def PrintAndResetTestMetrics(self) :
         acc = self.testAccuracy.compute().item() * 100
         f1 = self.F1Score.compute().item()
@@ -185,18 +186,18 @@ class EEGNet(pl.LightningModule) :
 
         # Print precision
         print(f"Precision: {pre:.03f}")
-        
+
         # Print recall
         print(f"Recall: {rec:.03f}")
         print()
-        
+
         # Print confusion matrix
         tempMat = self.confMatrix.compute()
         print("Confusion matrix:")
         for row in tempMat :
             print("|", end=" ")
             for col in row :
-                print(f"{col:>3d}", end=" ")
+                print(f"{col:>5.2f}", end=" ")
             print("|")
 
         self.testAccuracy.reset()

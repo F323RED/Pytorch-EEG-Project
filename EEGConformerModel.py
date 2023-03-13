@@ -63,24 +63,24 @@ class EEGConformer(pl.LightningModule) :
 
         # Init model metrics
         self.trainAccuracy = torchmetrics.Accuracy(task="multiclass",
-                                              num_classes=NUM_CLASS,
-                                              average="macro")
+                                                   average="micro",
+                                                   num_classes=NUM_CLASS)
 
         self.testAccuracy = torchmetrics.Accuracy(task="multiclass",
-                                              num_classes=NUM_CLASS,
-                                              average="macro")
+                                                  average="micro",
+                                                  num_classes=NUM_CLASS)
 
         self.valAccuracy = torchmetrics.Accuracy(task="multiclass",
-                                              num_classes=NUM_CLASS,
-                                              average="macro")
+                                                 average="micro",
+                                                 num_classes=NUM_CLASS)
 
         self.confMatrix = torchmetrics.ConfusionMatrix(task="multiclass",
+                                                       normalize="true",
                                                        num_classes=NUM_CLASS)
 
-        self.F1Score = torchmetrics.F1Score(task="multiclass", num_classes=NUM_CLASS)
-        self.preci = torchmetrics.Precision(task="multiclass", num_classes=NUM_CLASS)
-        self.recall = torchmetrics.Recall(task="multiclass", num_classes=NUM_CLASS)
-
+        self.F1Score = torchmetrics.F1Score(task="multiclass", average="macro", num_classes=NUM_CLASS)
+        self.preci = torchmetrics.Precision(task="multiclass", average="macro", num_classes=NUM_CLASS)
+        self.recall = torchmetrics.Recall(task="multiclass", average="macro", num_classes=NUM_CLASS)
 
         # Define model
         # Patch embedding. Convert 2D 'image' to serial of tokens.
@@ -234,7 +234,7 @@ class EEGConformer(pl.LightningModule) :
         for row in tempMat :
             print("|", end=" ")
             for col in row :
-                print(f"{col:>3d}", end=" ")
+                print(f"{col:>5.2f}", end=" ")
             print("|")
 
         self.testAccuracy.reset()
