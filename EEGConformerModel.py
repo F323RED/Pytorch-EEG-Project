@@ -32,7 +32,7 @@ class EEGConformer(pl.LightningModule) :
 
         # This determine how many TransformerDecoderLayer in TransformerDecoder
         # According to the paper, depth of 1 is just enough.
-        DECODER_DEPTH = 1
+        DECODER_DEPTH = 2
 
         # Number of attention head
         NUM_HEAD = 10

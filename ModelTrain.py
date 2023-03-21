@@ -24,17 +24,28 @@ warnings.filterwarnings("ignore")
 # Main function
 if __name__ == '__main__':
     # ------------------------All settings are here---------------------------- #
+    # Misc setting
     VERSION = 0.1
-    
+
+    # DataLoader settings
+    # Don't touch this unless you know what you are trying doing.
+    NUM_WORKERS = 0
+    PERSIS_WORKER = (NUM_WORKERS > 0)
+    PIN_MEM = True
+
+    # Dev settings. Don't touch.
+    SPEED_RUN_MODEL = False
+
+
+
     # Hyper parameters
     LEARNING_RATE = 0.001
-    MAX_EPOCHS = 300
+    MAX_EPOCHS = 200
     BATCH_SIZE = 100
 
     # Which model to use
     # modelName = "EEGNet"
     modelName = "EEGConformer"
-    
 
     # This decide which subject's data to load
     subjectName = "fred"
@@ -49,8 +60,10 @@ if __name__ == '__main__':
     # Path setting
     currentWorkingDir = os.getcwd()
     datasetDir = os.path.join(currentWorkingDir, "data", subjectName)
+
     modelSaveDir = os.path.join(currentWorkingDir, "params")
     modelSavePath = os.path.join(modelSaveDir, f"{modelName}-{subjectName}-v{VERSION}-{timeStamp}.pt")
+
     checkPointDir = os.path.join(currentWorkingDir, "checkpoint")
     logDir = os.path.join(currentWorkingDir, "logs")
     logName = f"{modelName}-{subjectName}-v{VERSION}-{timeStamp}"
@@ -68,24 +81,19 @@ if __name__ == '__main__':
         print()
 
 
-    # Load EEG dataset. 
+    # Load EEG dataset.
     # Shape: (num, channel, data points) = (num, 8, 500)
     print("Load train dataset")
     trainDataset = EEGDataset(root=datasetDir, type="train")
 
     print("Load test dataset")
     testDataset = EEGDataset(root=datasetDir, type="test")
-    
+
     print("Load val dataset")
     valDataset = EEGDataset(root=datasetDir, type="val")
 
 
-    # DataLoader settings
-    # Keep this 0 unless you know what you are doing.
-    NUM_WORKERS = 0
-    PIN_MEM = True
-    PERSIS_WORKER = (NUM_WORKERS > 0)
-
+    # Create dataloader
     trainDataLoader = DataLoader(trainDataset,
                                  batch_size=BATCH_SIZE,
                                  shuffle=True,
@@ -98,7 +106,7 @@ if __name__ == '__main__':
                                 batch_size=BATCH_SIZE,
                                 drop_last=True,
                                 pin_memory=PIN_MEM)
-    
+
     valDataLoader = DataLoader(valDataset,
                                batch_size=BATCH_SIZE,
                                drop_last=True,
@@ -136,7 +144,8 @@ if __name__ == '__main__':
                       log_every_n_steps=10,
                       logger=logger,
                       default_root_dir=checkPointDir,
-                      benchmark=True, 
+                      benchmark=True,
+                      fast_dev_run=SPEED_RUN_MODEL,
                       num_sanity_val_steps=0)
 
 
