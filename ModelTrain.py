@@ -9,7 +9,7 @@ import datetime
 
 from EEGNetModel import EEGNet
 from EEGConformerModel import EEGConformer
-from EEGDataset import EEGDataset, DataLoaderX
+from EEGDataset import EEGDataset
 
 # Configure logging at the root level of Lightning
 import logging
@@ -25,7 +25,7 @@ warnings.filterwarnings("ignore")
 if __name__ == '__main__':
     # ------------------------All settings are here---------------------------- #
     # Misc setting
-    VERSION = 0.1
+    VERSION = 1.0
 
     # DataLoader settings
     # Don't touch this unless you know what you are trying doing.
@@ -61,8 +61,8 @@ if __name__ == '__main__':
     currentWorkingDir = os.getcwd()
     datasetDir = os.path.join(currentWorkingDir, "data", subjectName)
 
-    modelSaveDir = os.path.join(currentWorkingDir, "params")
-    modelSavePath = os.path.join(modelSaveDir, f"{modelName}-{subjectName}-v{VERSION}-{timeStamp}.pt")
+    modelSaveDir = os.path.join(currentWorkingDir, "models")
+    modelSavePath = os.path.join(modelSaveDir, f"{modelName}-{subjectName}-v{VERSION}.pt")
 
     checkPointDir = os.path.join(currentWorkingDir, "checkpoint")
     logDir = os.path.join(currentWorkingDir, "logs")
@@ -193,7 +193,9 @@ if __name__ == '__main__':
 
         if(answer.lower() == "yes" or answer.lower() == "y") :
             with open(modelSavePath, mode='wb') as f:
-                torch.save(model.state_dict(), f)
+                script = model.to_torchscript()
+                torch.jit.save(script, f)
+
                 print("Model saved.")
             break
 

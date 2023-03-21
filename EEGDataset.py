@@ -3,8 +3,6 @@ from torch.utils.data import Dataset, DataLoader
 import torch.nn.functional as F
 from torchvision import transforms
 
-from prefetch_generator import BackgroundGenerator
-
 import os
 import numpy as np
 
@@ -55,8 +53,3 @@ class EEGDataset(Dataset):
 
     def __len__(self):
         return self.numSamples
-
-# Dataloader with prefetch functionality
-class DataLoaderX(DataLoader):
-    def __iter__(self):
-        return BackgroundGenerator(super().__iter__())
