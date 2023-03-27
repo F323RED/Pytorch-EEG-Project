@@ -26,7 +26,7 @@ warnings.filterwarnings("ignore")
 if __name__ == '__main__':
     # ------------------------All settings are here---------------------------- #
     # Misc setting
-    VERSION = 1.1
+    VERSION = 1.0
 
     # DataLoader settings
     # Don't touch this unless you know what you are trying doing.
@@ -45,13 +45,13 @@ if __name__ == '__main__':
     BATCH_SIZE = 100
 
     # Which model to use
-    # modelName = "EEGNet"
-    modelName = "EEGConformer"
+    modelName = "EEGNet"
+    # modelName = "EEGConformer"
 
     # This decide which subject's data to load
-    # subjectName = "fred"
+    subjectName = "fred"
     # subjectName = "charli"
-    subjectName = "eddi"
+    # subjectName = "eddi"
     # ------------------------------------------------------------------------ #
 
     # Date record

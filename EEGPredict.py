@@ -25,8 +25,8 @@ if __name__ == '__main__':
 
 
     # Which model to use
-    # modelName = "EEGNet"
-    modelName = "EEGConformer"
+    modelName = "EEGNet"
+    # modelName = "EEGConformer"
 
     # This decide which subject's data to load
     subjectName = "fred"

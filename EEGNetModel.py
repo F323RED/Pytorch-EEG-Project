@@ -6,6 +6,9 @@ import torch.nn.functional as F
 import pytorch_lightning as pl
 import torchmetrics
 
+import numpy as np
+import einops
+
 # Design model
 class EEGNet(pl.LightningModule) :
     def __init__(self, lr=0.001) :
@@ -159,6 +162,14 @@ class EEGNet(pl.LightningModule) :
         self.log("val_loss", loss)
 
         return loss
+
+    @torch.jit.export
+    def predict(self, x) :
+        pred = self(x)
+        pred = F.softmax(pred, dim=1)
+        pred = pred.cpu()
+
+        return pred
 
     def configure_optimizers(self) :
         optimizer = torch.optim.Adam(self.parameters(), lr=self.lr, weight_decay=1e-4)

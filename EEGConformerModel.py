@@ -32,7 +32,7 @@ class EEGConformer(pl.LightningModule) :
 
         # This determine how many TransformerDecoderLayer in TransformerDecoder
         # According to the paper, depth of 1 is just enough.
-        DECODER_DEPTH = 2
+        DECODER_DEPTH = 1
 
         # Number of attention head
         NUM_HEAD = 10
@@ -196,6 +196,14 @@ class EEGConformer(pl.LightningModule) :
         self.log("val_loss", loss)
 
         return loss
+
+    @torch.jit.export
+    def predict(self, x) :
+        pred = self(x)
+        pred = F.softmax(pred, dim=1)
+        pred = pred.cpu()
+
+        return pred
 
     def configure_optimizers(self) :
         optimizer = torch.optim.Adam(self.parameters(), lr=self.lr, weight_decay=1e-4)

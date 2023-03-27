@@ -9,3 +9,6 @@ GetDataMeanStd.ipynb
 console screenshots/*
 params/*
 ConsoleAndFileWriter.py
+exp/*
+check_save.txt
+pred.txt
