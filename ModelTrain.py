@@ -5,6 +5,7 @@ from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import CSVLogger
 
 import os
+import shutil
 import datetime
 
 from EEGNetModel import EEGNet
@@ -25,7 +26,7 @@ warnings.filterwarnings("ignore")
 if __name__ == '__main__':
     # ------------------------All settings are here---------------------------- #
     # Misc setting
-    VERSION = 1.0
+    VERSION = 1.1
 
     # DataLoader settings
     # Don't touch this unless you know what you are trying doing.
@@ -48,9 +49,9 @@ if __name__ == '__main__':
     modelName = "EEGConformer"
 
     # This decide which subject's data to load
-    subjectName = "fred"
+    # subjectName = "fred"
     # subjectName = "charli"
-    # subjectName = "eddi"
+    subjectName = "eddi"
     # ------------------------------------------------------------------------ #
 
     # Date record
@@ -68,6 +69,10 @@ if __name__ == '__main__':
     logDir = os.path.join(currentWorkingDir, "logs")
     logName = f"{modelName}-{subjectName}-v{VERSION}-{timeStamp}"
 
+    metricDir = os.path.join(currentWorkingDir, "metrics")
+    metricOriginPath = os.path.join(logDir, logName, "metrics.csv")
+    metricNewPath = os.path.join(metricDir, f"{logName}.csv")
+
 
     # Create folder when needed
     if not os.path.isdir(datasetDir) :
@@ -78,6 +83,11 @@ if __name__ == '__main__':
     if not os.path.isdir(modelSaveDir) :
         os.mkdir(modelSaveDir)
         print(f"\"{modelSaveDir}\" created.")
+        print()
+
+    if not os.path.isdir(metricDir) :
+        os.mkdir(metricDir)
+        print(f"\"{metricDir}\" created.")
         print()
 
 
@@ -181,6 +191,15 @@ if __name__ == '__main__':
     model.PrintAndResetTestMetrics()
 
     print("─" * 80)
+    print()
+
+
+    # Copy training metrics log to "mterics" dir
+    if os.path.exists(metricOriginPath) :
+        shutil.copy(metricOriginPath, metricNewPath)
+        print("Metrics log copied.")
+    else :
+        print("Metrics log file not found.")
     print()
 
 

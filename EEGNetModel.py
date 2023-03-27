@@ -161,15 +161,10 @@ class EEGNet(pl.LightningModule) :
         return loss
 
     def configure_optimizers(self) :
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr, weight_decay=1e-4)
 
         return {
-            "optimizer": optimizer,
-            "lr_scheduler": {
-                "scheduler": ls.ExponentialLR(optimizer, gamma=0.9),
-                "interval": "epoch",
-                "frequency": 1,
-            },
+            "optimizer": optimizer
         }
 
     def PrintAndResetTestMetrics(self) :

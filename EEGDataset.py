@@ -38,6 +38,14 @@ class EEGDataset(Dataset):
         self.x = torch.from_numpy(np.load(dataPath))
         self.x = self.x.type(torch.float32)
         self.x = self.x.view((self.x.shape[0], 1, self.x.shape[1], self.x.shape[2]))
+
+        # Create transformer for data pre-processing
+        # This apply z-score normalize
+        # Mean and std comes from all EEG data across all subject
+        std = self.x.std(dim=(0, 2, 3))
+        mean = self.x.mean(dim=(0, 2, 3))
+        preprocessor = transforms.Normalize(mean=mean, std=std)
+        
         self.x = preprocessor(self.x)
 
         # Load labels
