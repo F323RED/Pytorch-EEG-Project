@@ -29,7 +29,7 @@ if __name__ == '__main__':
     VERSION = 1.0
 
     # DataLoader settings
-    # Don't touch this unless you know what you are trying doing.
+    # Don't touch this unless you know what you are doing.
     NUM_WORKERS = 0
     PERSIS_WORKER = (NUM_WORKERS > 0)
     PIN_MEM = True
