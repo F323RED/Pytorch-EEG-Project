@@ -12,3 +12,4 @@ ConsoleAndFileWriter.py
 exp/*
 check_save.txt
 pred.txt
+*.ipynb
